@@ -2,6 +2,15 @@ import zoneinfo
 from datetime import datetime
 
 from fastapi import FastAPI
+from pydantic import BaseModel
+
+
+class Customer(BaseModel):
+    name: str
+    description: str | None
+    email: str
+    age: int
+
 
 app = FastAPI()
 
@@ -25,3 +34,8 @@ async def time(iso_code: str):
     timezone_str = country_timezones.get(iso)
     tz = zoneinfo.ZoneInfo(timezone_str) if timezone_str else zoneinfo.ZoneInfo("UTC")
     return {"time": datetime.now(tz).isoformat(), "iso_code": iso_code}
+
+
+app.post("/customers")
+async def create_customer(customer_data: Customer):
+    return customer_data
