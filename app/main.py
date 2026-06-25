@@ -3,7 +3,7 @@ from datetime import datetime
 
 from fastapi import FastAPI
 
-from .models import CustomerCreate, Invoice, Transaction
+from .models import Customer, CustomerCreate, Invoice, Transaction
 
 app = FastAPI()
 
@@ -29,9 +29,21 @@ async def time(iso_code: str):
     return {"time": datetime.now(tz).isoformat(), "iso_code": iso_code}
 
 
-@app.post("/customers")
+db_customers: list[Customer] = []
+
+
+@app.post("/customers", response_model=Customer)
 async def create_customer(customer_data: CustomerCreate):
-    return customer_data
+    customer = Customer.model_validate(customer_data.model_dump())
+    # Asumiendo que hace base de datos, se incrementa el ID del cliente
+    customer.id = len(db_customers)
+    db_customers.append(customer)
+    return customer
+
+
+@app.get("/customers", response_model=list[Customer])
+async def list_customers():
+    return db_customers
 
 
 @app.post("/transactions")
