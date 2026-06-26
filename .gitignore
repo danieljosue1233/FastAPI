@@ -16,3 +16,4 @@ __pycache__/
 # Bases de datos locales
 *.db
 *.sqlite3
+*.database.db

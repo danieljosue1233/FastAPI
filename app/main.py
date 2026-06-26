@@ -1,12 +1,13 @@
 import zoneinfo
 from datetime import datetime
 
-from db import SessionDep
 from fastapi import FastAPI
+from sqlmodel import select
 
+from .db import SessionDep, create_all_tables
 from .models import Customer, CustomerCreate, Invoice, Transaction
 
-app = FastAPI()
+app = FastAPI(lifespan=create_all_tables)
 
 
 @app.get("/")
@@ -30,21 +31,24 @@ async def time(iso_code: str):
     return {"time": datetime.now(tz).isoformat(), "iso_code": iso_code}
 
 
-db_customers: list[Customer] = []
+# db_customers: list[Customer] = []
 
 
 @app.post("/customers", response_model=Customer)
 async def create_customer(customer_data: CustomerCreate, session=SessionDep):
     customer = Customer.model_validate(customer_data.model_dump())
+    session.add(customer)
+    session.commit()
+    session.refresh(customer)
     # Asumiendo que hace base de datos, se incrementa el ID del cliente
-    customer.id = len(db_customers)
-    db_customers.append(customer)
+    # customer.id = len(db_customers)
+    # db_customers.append(customer)
     return customer
 
 
 @app.get("/customers", response_model=list[Customer])
-async def list_customers():
-    return db_customers
+async def list_customers(session=SessionDep):
+    return session.exec(select(Customer)).all()
 
 
 @app.post("/transactions")

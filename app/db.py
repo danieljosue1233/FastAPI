@@ -1,7 +1,8 @@
-from typing import Annoted
+from typing import Annotated
 
+from fastapi import FastAPI
 from fastapi.params import Depends
-from sqlmodel import Session, create_engine
+from sqlmodel import Session, SQLModel, create_engine
 
 sqlite_name = "database.db"
 sqlite_url = f"sqlite:///{sqlite_name}"
@@ -9,9 +10,14 @@ sqlite_url = f"sqlite:///{sqlite_name}"
 engine = create_engine(sqlite_url)
 
 
+def create_all_tables(app: FastAPI):
+    SQLModel.metadata.create_all(engine)
+    yield
+
+
 def get_session():
     with Session(engine) as session:
         yield session
 
 
-SessionDep = Annoted[Session, Depends(get_session)]
+SessionDep = Annotated[Session, Depends(get_session)]
