@@ -1,7 +1,7 @@
 import zoneinfo
 from datetime import datetime
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from sqlmodel import select
 
 from .db import SessionDep, create_all_tables
@@ -35,7 +35,7 @@ async def time(iso_code: str):
 
 
 @app.post("/customers", response_model=Customer)
-async def create_customer(customer_data: CustomerCreate, session=SessionDep):
+async def create_customer(customer_data: CustomerCreate, session: SessionDep):
     customer = Customer.model_validate(customer_data.model_dump())
     session.add(customer)
     session.commit()
@@ -46,8 +46,30 @@ async def create_customer(customer_data: CustomerCreate, session=SessionDep):
     return customer
 
 
+@app.get("/customers/{customer_id}", response_model=Customer)
+async def read_customer(customer_id: int, session: SessionDep):
+    customer_db = session.get(Customer, customer_id)
+    if not customer_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found"
+        )
+    return customer_db
+
+
+@app.delete("/customers/{customer_id}")
+async def delete_customer(customer_id: int, session: SessionDep):
+    customer_db = session.get(Customer, customer_id)
+    if not customer_db:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found"
+        )
+    session.delete(customer_db)
+    session.commit()
+    return {"detail": "ok"}
+
+
 @app.get("/customers", response_model=list[Customer])
-async def list_customers(session=SessionDep):
+async def list_customers(session: SessionDep):
     return session.exec(select(Customer)).all()
 
 
