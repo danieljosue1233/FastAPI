@@ -4,8 +4,8 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException, status
 from sqlmodel import select
 
-from .db import SessionDep, create_all_tables
-from .models import Customer, CustomerCreate, CustomerUpdate, Invoice, Transaction
+from ..db import SessionDep, create_all_tables
+from ..models import Customer, CustomerCreate, CustomerUpdate, Invoice, Transaction
 
 app = FastAPI(lifespan=create_all_tables)
 
